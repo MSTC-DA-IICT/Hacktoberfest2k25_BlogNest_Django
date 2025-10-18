@@ -9,12 +9,11 @@ def signup_view(request):
         username = request.POST['username']
         password = request.POST['password']
         User.objects.create_user(username=username, password=password)
-        return render(request, 'signup_success.html')
-    return render(request, 'signup.html')
+        return render(request, 'registration/signup.html', {'success': 'Account created successfully! Please login.'})
+    return render(request, 'registration/signup.html')
 
 
 def login_view(request):
-
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -23,8 +22,8 @@ def login_view(request):
             auth_views.login(request, user)
             return render(request, 'home.html')
         else:
-            return render(request, 'login.html', {'error': 'Invalid credentials'})
-    return render(request, 'login.html')
+            return render(request, 'registration/login.html', {'error': 'Invalid credentials'})
+    return render(request, 'registration/login.html')
 
 
 def home_view(request):
