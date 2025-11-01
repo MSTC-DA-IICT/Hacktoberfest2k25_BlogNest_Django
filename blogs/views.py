@@ -2,18 +2,22 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import views as auth_views
 from django.views.generic import CreateView, ListView
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
 
 from .models import BlogPost
 from django.contrib.auth.models import User
-from .forms import BlogPostForm
+from .forms import BlogPostForm, UserSignupForm
 
 def signup_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        User.objects.create_user(username=username, password=password)
-        return render(request, 'signup_success.html')
-    return render(request, 'signup.html')
+        form = UserSignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # Automatically log in the user after signup
+            return redirect('home')  # Redirect to home page after successful signup
+    else:
+        form = UserSignupForm()
+    return render(request, 'signup.html', {'form': form})
 
 
 def login_view(request):

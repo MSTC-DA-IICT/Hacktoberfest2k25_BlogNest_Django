@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from .models import BlogPost
 
 
@@ -200,3 +201,66 @@ class BlogCommentForm(forms.Form):
         if not comment or len(comment.strip()) < 10:
             raise forms.ValidationError("Comment must be at least 10 characters long.")
         return comment.strip()
+
+
+class UserSignupForm(UserCreationForm):
+    """
+    Custom user signup form with email field and improved styling.
+    """
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'your.email@example.com'
+        }),
+        label='Email Address'
+    )
+    
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Choose a username...'
+        }),
+        label='Username',
+        help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'
+    )
+    
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your password...'
+        }),
+        label='Password',
+        help_text='Your password must contain at least 8 characters.'
+    )
+    
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm your password...'
+        }),
+        label='Password Confirmation'
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password1', 'password2']
+    
+    def clean_email(self):
+        """
+        Validate that the email is unique.
+        """
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("A user with this email already exists.")
+        return email
+    
+    def save(self, commit=True):
+        """
+        Save the user and set the email.
+        """
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+        return user
