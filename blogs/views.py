@@ -64,7 +64,7 @@ def blog_create_view(request):
                 blog_post.status = 'draft'
 
             blog_post.save()
-            return redirect('blogs:home')
+            return redirect('home')
     else:
         form = BlogPostForm()
 
