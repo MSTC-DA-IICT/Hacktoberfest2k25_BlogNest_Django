@@ -1,11 +1,21 @@
+{% extends 'base.html' %}
 
+{% block title %}Home - BlogNest{% endblock %}
 
 {% block content %}
-<h1>Welcome to the BlogNest</h1>
-{% if user.is_authenticated %}
-    Hi {{ user.username }}!
-{% else %}
-    <a href="{% url 'login' %}">Login</a> | <a href="{% url 'signup' %}">Sign Up</a>
-{% endif %}
-<p>This is the home page.</p>
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h1 class="display-4 mb-4">Welcome to BlogNest</h1>
+        {% if user.is_authenticated %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> Hi {{ user.username }}! You're logged in.
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Please <a href="{% url 'login' %}" class="alert-link">Login</a> or <a href="{% url 'signup' %}" class="alert-link">Sign Up</a> to get started.
+            </div>
+        {% endif %}
+        <p class="lead">This is the home page.</p>
+    </div>
+</div>
 {% endblock %}
