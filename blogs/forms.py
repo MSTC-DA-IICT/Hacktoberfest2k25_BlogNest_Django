@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import BlogPost
+from .models import BlogPost, Comment
 
 
 class BlogPostForm(forms.ModelForm):
@@ -153,54 +153,33 @@ class BlogSearchForm(forms.Form):
     )
 
 
-class BlogCommentForm(forms.Form):
+class CommentForm(forms.ModelForm):
     """
     Form for adding comments to blog posts.
     """
     
-    name = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Your name...'
-        }),
-        label='Name'
-    )
+    class Meta:
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Write your comment here...',
+                'rows': 4
+            })
+        }
+        labels = {
+            'content': 'Comment'
+        }
     
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'your.email@example.com'
-        }),
-        label='Email'
-    )
-    
-    comment = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'placeholder': 'Write your comment here...',
-            'rows': 4
-        }),
-        label='Comment'
-    )
-    
-    def clean_name(self):
+    def clean_content(self):
         """
-        Validate name field.
+        Validate comment content.
         """
-        name = self.cleaned_data.get('name')
-        if not name or len(name.strip()) < 2:
-            raise forms.ValidationError("Name must be at least 2 characters long.")
-        return name.strip()
-    
-    def clean_comment(self):
-        """
-        Validate comment field.
-        """
-        comment = self.cleaned_data.get('comment')
-        if not comment or len(comment.strip()) < 10:
+        content = self.cleaned_data.get('content')
+        if not content or len(content.strip()) < 10:
             raise forms.ValidationError("Comment must be at least 10 characters long.")
-        return comment.strip()
+        return content.strip()
 
 
 class UserSignupForm(UserCreationForm):

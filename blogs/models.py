@@ -17,3 +17,42 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+    
+    def get_like_count(self):
+        """Get the actual count of likes from Like model"""
+        return self.likes_set.count()
+    
+    def is_liked_by_user(self, user):
+        """Check if a user has liked this post"""
+        if not user.is_authenticated:
+            return False
+        return self.likes_set.filter(user=user).exists()
+
+
+class Like(models.Model):
+    """Model to track likes on blog posts"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    blog_post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='likes_set')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'blog_post')  # Prevent duplicate likes
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} liked {self.blog_post.title}"
+
+
+class Comment(models.Model):
+    """Model to store comments on blog posts"""
+    blog_post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.blog_post.title}"
