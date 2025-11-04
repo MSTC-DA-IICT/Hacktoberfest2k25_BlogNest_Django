@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} - BlogNest{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Back to List Button -->
+      <div class="mb-3">
+        <a href="{% url 'blogs:list' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Blog List
+        </a>
+      </div>
+
+      <!-- Blog Post Card -->
+      <div class="card shadow mb-4">
+        <div class="card-body">
+          <!-- Title -->
+          <h1 class="card-title mb-3">{{ post.title }}</h1>
+          
+          <!-- Meta Information -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <small class="text-muted">
+                <i class="fas fa-user"></i> By 
+                <strong>{{ post.author.username }}</strong>
+              </small>
+              <span class="mx-2">|</span>
+              <small class="text-muted">
+                <i class="fas fa-calendar"></i> {{ post.created_at|date:"F d, Y" }}
+              </small>
+              {% if post.tags %}
+              <span class="mx-2">|</span>
+              <small class="text-muted">
+                <i class="fas fa-tags"></i> {{ post.tags }}
+              </small>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Excerpt -->
+          {% if post.excerpt %}
+          <div class="alert alert-info mb-3">
+            <p class="mb-0"><strong>Summary:</strong> {{ post.excerpt }}</p>
+          </div>
+          {% endif %}
+
+          <!-- Content -->
+          <div class="blog-content mb-4">
+            {{ post.content|linebreaks }}
+          </div>
+
+          <!-- Like Button -->
+          <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+            <div>
+              {% if user.is_authenticated %}
+                <form method="post" action="{% url 'blogs:like' post.pk %}" class="d-inline" id="like-form">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger {% if is_liked %}active{% endif %}" id="like-btn">
+                    <i class="fas fa-heart {% if is_liked %}fas{% else %}far{% endif %}"></i>
+                    <span id="like-text">{% if is_liked %}Liked{% else %}Like{% endif %}</span>
+                    <span class="badge bg-danger ms-2" id="like-count">{{ like_count }}</span>
+                  </button>
+                </form>
+              {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-danger">
+                  <i class="far fa-heart"></i> Like
+                  <span class="badge bg-danger ms-2">{{ like_count }}</span>
+                </a>
+                <small class="text-muted ms-2">Login to like posts</small>
+              {% endif %}
+            </div>
+            <div>
+              <small class="text-muted">
+                <i class="fas fa-clock"></i> Last updated: {{ post.updated_at|date:"F d, Y" }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments Section -->
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-comments"></i> Comments 
+            <span class="badge bg-light text-dark ms-2">{{ comments|length }}</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Comment Form -->
+          {% if user.is_authenticated %}
+          <div class="mb-4">
+            <h6>Add a Comment</h6>
+            <form method="post" action="{% url 'blogs:comment' post.pk %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                {{ comment_form.content }}
+                {% if comment_form.content.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in comment_form.content.errors %}
+                  <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Post Comment
+              </button>
+            </form>
+          </div>
+          <hr>
+          {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 
+            Please <a href="{% url 'login' %}" class="alert-link">login</a> to add comments.
+          </div>
+          <hr>
+          {% endif %}
+
+          <!-- Comments List -->
+          {% if comments %}
+          <div class="comments-list">
+            {% for comment in comments %}
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <strong>
+                      <i class="fas fa-user"></i> {{ comment.user.username }}
+                    </strong>
+                    <small class="text-muted ms-2">
+                      <i class="fas fa-clock"></i> {{ comment.created_at|date:"F d, Y g:i A" }}
+                    </small>
+                  </div>
+                </div>
+                <p class="mb-0">{{ comment.content|linebreaks }}</p>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted text-center py-4">
+            <i class="fas fa-comment-slash"></i> No comments yet. Be the first to comment!
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .blog-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+  }
+  
+  .blog-content p {
+    margin-bottom: 1rem;
+  }
+  
+  #like-btn.active {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+  }
+  
+  .card {
+    border-radius: 10px;
+  }
+  
+  .card-header {
+    border-radius: 10px 10px 0 0 !important;
+  }
+</style>
+
+<script>
+  // AJAX like functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const likeForm = document.getElementById('like-form');
+    if (likeForm) {
+      likeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const likeBtn = document.getElementById('like-btn');
+        const likeText = document.getElementById('like-text');
+        const likeCount = document.getElementById('like-count');
+        
+        fetch(this.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          likeCount.textContent = data.like_count;
+          
+          if (data.liked) {
+            likeBtn.classList.add('active');
+            likeText.textContent = 'Liked';
+            likeBtn.querySelector('i').classList.remove('far');
+            likeBtn.querySelector('i').classList.add('fas');
+          } else {
+            likeBtn.classList.remove('active');
+            likeText.textContent = 'Like';
+            likeBtn.querySelector('i').classList.remove('fas');
+            likeBtn.querySelector('i').classList.add('far');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          // Fallback to form submission
+          this.submit();
+        });
+      });
+    }
+  });
+</script>
+{% endblock %}
+

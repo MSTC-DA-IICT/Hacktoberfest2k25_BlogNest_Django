@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import BlogPost
+from .models import BlogPost, Like, Comment
 
 
 # Configure User admin for better autocomplete in BlogPost admin
@@ -62,3 +62,44 @@ class BlogPostAdmin(admin.ModelAdmin):
     
     # Auto-complete for author field
     autocomplete_fields = ['author']
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for Like model.
+    """
+    list_display = ('user', 'blog_post', 'created_at')
+    list_filter = ('created_at', 'blog_post')
+    search_fields = ('user__username', 'blog_post__title')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for Comment model.
+    """
+    list_display = ('user', 'blog_post', 'content_preview', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at', 'blog_post')
+    search_fields = ('user__username', 'blog_post__title', 'content')
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+    
+    fieldsets = (
+        ('Comment Information', {
+            'fields': ('blog_post', 'user', 'content')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def content_preview(self, obj):
+        """Show first 50 characters of comment"""
+        return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
+    content_preview.short_description = 'Content Preview'
